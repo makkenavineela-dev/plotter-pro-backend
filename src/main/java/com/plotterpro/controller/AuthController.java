@@ -65,9 +65,13 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public String processForgotPassword(@RequestParam String email, Model model) {
-        userService.createPasswordResetToken(email);
-        model.addAttribute("message",
-                "If an account exists, a reset link has been sent to your email (Check Server Console).");
+        try {
+            userService.createPasswordResetToken(email);
+            model.addAttribute("message", "If an account exists, a reset link has been sent to your email.");
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to send email. Please check server logs.");
+            e.printStackTrace();
+        }
         return "forgot-password";
     }
 
