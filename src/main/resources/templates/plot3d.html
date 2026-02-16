@@ -153,6 +153,8 @@
             </div>
         </div>
     </div>
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         const container = document.getElementById('container3D');
@@ -160,6 +162,31 @@
         const inXRange = document.getElementById('xRange');
         const inYRange = document.getElementById('yRange');
         const rangeDisplay = document.getElementById('rangeDisplay');
+
+        // PDF Export Logic
+        window.exportPDF = function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(22);
+            doc.setTextColor(40, 40, 40);
+            doc.text("Plotter Pro Report", 20, 20);
+
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            const title = document.querySelector('input[name="title"]').value || "Untitled 3D Graph";
+            const eq = input.value;
+            doc.text(`Title: ${title}`, 20, 35);
+            doc.text(`Equation: z = ${eq}`, 20, 42);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 49);
+
+            renderer.render(scene, camera);
+            const imgData = renderer.domElement.toDataURL("image/png");
+            doc.addImage(imgData, 'PNG', 15, 60, 180, 100);
+
+            doc.save(`${title.replace(/\s+/g, '_')}_report.pdf`);
+            showToast("PDF Report Downloaded! 📄");
+        };
 
         let scene, camera, renderer, controls, mesh, gridHelper;
 

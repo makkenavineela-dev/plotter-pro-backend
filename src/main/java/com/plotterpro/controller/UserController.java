@@ -48,16 +48,22 @@ public class UserController {
             @RequestParam String confirmPassword,
             @AuthenticationPrincipal UserDetails userDetails,
             RedirectAttributes redirectAttributes) {
+        System.out.println("Processing password change for: " + userDetails.getUsername());
+
         if (!newPassword.equals(confirmPassword)) {
+            System.out.println("Password mismatch");
             redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             return "redirect:/profile";
         }
 
         try {
             userService.updatePassword(userDetails.getUsername(), newPassword);
+            System.out.println("Password updated successfully");
             redirectAttributes.addFlashAttribute("success", "Password changed successfully");
             return "redirect:/profile";
         } catch (Exception e) {
+            System.out.println("Error updating password: " + e.getMessage());
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Failed to update password");
             return "redirect:/profile";
         }
