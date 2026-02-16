@@ -346,7 +346,30 @@
 
         // Form Handling
         const saveForm = document.getElementById('saveForm');
+        const shareBtn = document.getElementById('shareBtn'); // Defined shareBtn
         const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg'); // Defined toastMsg
+
+        // Share Logic (Copied from 2D Plotter)
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                const id = document.querySelector('input[name="id"]').value;
+                if (!id) {
+                    alert("Please save the graph first!");
+                    return;
+                }
+
+                fetch(`/api/graphs/${id}/share-link`)
+                    .then(r => r.text())
+                    .then(path => {
+                        const fullUrl = window.location.origin + path;
+                        navigator.clipboard.writeText(fullUrl).then(() => {
+                            showToast("Link Copied to Clipboard! 🔗");
+                        });
+                    })
+                    .catch(() => alert("Failed to get share link"));
+            });
+        }
 
         saveForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -357,14 +380,15 @@
                 body: formData
             }).then(response => {
                 if (response.ok) {
-                    showToast();
+                    showToast("Graph Saved Successfully!");
                 } else {
                     alert('Error saving graph');
                 }
             }).catch(() => alert('Network error'));
         });
 
-        function showToast() {
+        function showToast(msg) {
+            if (msg) toastMsg.textContent = msg;
             toast.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
