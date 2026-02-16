@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${graph != null} ? ${graph.title} : 'New 2D Graph'">2D Plotter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col p-4 transition-colors duration-300">
+
+    <!-- Navbar -->
+    <nav
+        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm flex justify-between items-center mb-6 transition-colors duration-300">
+        <a href="/main"
+            class="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">← Back
+            to Dashboard</a>
+        <h1 class="font-black text-xl italic tracking-tighter text-blue-600 dark:text-blue-400">2D<span
+                class="text-gray-800 dark:text-white">STUDIO</span></h1>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggle"
+            class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+            <svg id="sun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+            </svg>
+            <svg id="moon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <div class="flex-1 flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full">
+        <!-- Canvas Area -->
+        <div
+            class="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 relative flex items-center justify-center transition-colors duration-300 overflow-hidden">
+            <canvas id="canvas2D" class="w-full h-full cursor-crosshair"></canvas>
+
+            <div class="absolute bottom-4 right-4">
+                <button id="downloadBtn"
+                    class="bg-gray-900 dark:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black dark:hover:bg-gray-900 transition shadow-lg">Download
+                    PNG</button>
+            </div>
+
+            <!-- Axis Labels Overlay can be added later if needed -->
+        </div>
+
+        <!-- Controls -->
+        <div class="w-full lg:w-96 flex flex-col gap-4">
+            <div
+                class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                <h2 class="font-bold text-gray-800 dark:text-white mb-4">Properties</h2>
+
+                <form action="/save-graph" method="post" id="saveForm">
+                    <input type="hidden" name="mode" value="2d">
+                    <input type="hidden" name="id" th:value="${graph != null} ? ${graph.id} : ''">
+
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Title</label>
+                    <input type="text" name="title" th:value="${graph != null} ? ${graph.title} : 'Untitled 2D Graph'"
+                        class="w-full mb-4 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Equation (y =
+                        f(x))</label>
+
+                    <!-- NEW: Presets Dropdown -->
+                    <select id="presetSelect"
+                        class="w-full mb-2 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-500 dark:text-gray-400 focus:outline-none transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <option value="" disabled selected>✨ Select an example...</option>
+                        <option value="sin(x)">Sine Wave</option>
+                        <option value="x^2">Parabola</option>
+                        <option value="sin(x) * x">Damped Sine</option>
+                        <option value="1/x">Hyperbola</option>
+                        <option value="sqrt(100 - x^2)">Semi-Circle</option>
+                        <option value="sin(x) + cos(2*x)">Interference</option>
+                        <option value="tan(x)">Tangent</option>
+                    </select>
+
+                    <input type="text" id="equationInput" name="equation"
+                        th:value="${graph != null} ? ${graph.equation} : 'sin(x)'"
+                        class="w-full mb-4 px-3 py-2 bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-700 rounded-lg font-mono text-blue-700 dark:text-blue-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+
+                    <!-- Range Inputs -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">X Min</label>
+                            <input type="number" id="xMin" value="-10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">X Max</label>
+                            <input type="number" id="xMax" value="10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Y Min</label>
+                            <input type="number" id="yMin" value="-10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Y Max</label>
+                            <input type="number" id="yMax" value="10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="button" id="plotBtn"
+                            class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold py-2 rounded-lg transition">Render</button>
+                        <button type="submit" id="saveBtn"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow-md shadow-blue-500/30">Save
+                            Graph</button>
+                    </div>
+                    <!-- Share Button (Only for existing graphs) -->
+                    <button th:if="${graph != null}" type="button" id="shareBtn"
+                        class="w-full mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition shadow-md shadow-green-500/30">
+                        Share Link 🔗
+                    </button>
+                    <!-- PDF Button -->
+                    <button type="button" onclick="exportPDF()"
+                        class="w-full mt-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 rounded-lg transition shadow-md border border-gray-600">
+                        Download PDF Report 📄
+                    </button>
+                </form>
+
+                <!-- Toast Notification -->
+                <div id="toast"
+                    class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span id="toastMsg" class="font-bold text-sm">Graph Saved Successfully!</span>
+                </div>
+
+                <div id="errorMsg"
+                    class="hidden mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded"></div>
+            </div>
+
+            <div
+                class="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-2xl border border-blue-100 dark:border-blue-800 transition-colors">
+                <h3 class="font-bold text-blue-800 dark:text-blue-300 text-sm mb-2">Instructions</h3>
+                <p class="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+                    Use <code class="bg-white dark:bg-gray-800 px-1 rounded">sin(x)</code>, <code
+                        class="bg-white dark:bg-gray-800 px-1 rounded">x^2</code>...<br>
+                    Math.js syntax supported.
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script th:inline="javascript">
+        const canvas = document.getElementById('canvas2D');
+        const ctx = canvas.getContext('2d');
+        const input = document.getElementById('equationInput');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // PDF Export Logic
+        window.exportPDF = function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // 1. Add Title
+            doc.setFontSize(22);
+            doc.setTextColor(40, 40, 40);
+            doc.text("Plotter Pro Report", 20, 20);
+
+            // 2. Add Metadata
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            const title = document.querySelector('input[name="title"]').value || "Untitled Graph";
+            const eq = input.value;
+            doc.text(`Title: ${title}`, 20, 35);
+            doc.text(`Equation: y = ${eq}`, 20, 42);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 49);
+
+            // 3. Add Graph Image
+            // Create a white background for existing transparent canvas if needed, 
+            // but usually 2D canvas is fine.
+            const imgData = canvas.toDataURL("image/png");
+            doc.addImage(imgData, 'PNG', 15, 60, 180, 100); // x, y, w, h
+
+            // 4. Save
+            doc.save(`${title.replace(/\s+/g, '_')}_report.pdf`);
+
+            showToast("PDF Report Downloaded! 📄");
+        };
+
+        // Range Inputs
+        const inXMin = document.getElementById('xMin');
+        const inXMax = document.getElementById('xMax');
+        const inYMin = document.getElementById('yMin');
+        const inYMax = document.getElementById('yMax');
+
+        // Theme Logic
+        const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        if (localStorage.getItem('theme') === 'dark') html.classList.add('dark');
+
+        toggleBtn.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            render();
+        });
+
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 500;
+            render();
+        }
+
+        function render() {
+            errorMsg.classList.add('hidden');
+            const w = canvas.width, h = canvas.height;
+            const isDark = html.classList.contains('dark');
+
+            const xMin = parseFloat(inXMin.value) || -10;
+            const xMax = parseFloat(inXMax.value) || 10;
+            const yMin = parseFloat(inYMin.value) || -10;
+            const yMax = parseFloat(inYMax.value) || 10;
+            const xRange = xMax - xMin;
+            const yRange = yMax - yMin;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const toPx = (x) => ((x - xMin) / xRange) * w;
+            const toPy = (y) => h - ((y - yMin) / yRange) * h;
+
+            // Grid
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = isDark ? '#374151' : '#e5e7eb';
+            ctx.beginPath();
+
+            let xStep = xRange / 10;
+            for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) {
+                const px = toPx(x);
+                ctx.moveTo(px, 0); ctx.lineTo(px, h);
+                ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af';
+                ctx.font = '10px monospace';
+                ctx.fillText(x.toFixed(1), px + 2, h - 5);
+            }
+            let yStep = yRange / 10;
+            for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+                const py = toPy(y);
+                ctx.moveTo(0, py); ctx.lineTo(w, py);
+                ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af';
+                ctx.fillText(y.toFixed(1), 5, py - 2);
+            }
+            ctx.stroke();
+
+            // Axes
+            if (xMin <= 0 && xMax >= 0) {
+                const zeroX = toPx(0);
+                ctx.strokeStyle = isDark ? '#9ca3af' : '#4b5563';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(zeroX, 0); ctx.lineTo(zeroX, h); ctx.stroke();
+            }
+            if (yMin <= 0 && yMax >= 0) {
+                const zeroY = toPy(0);
+                ctx.strokeStyle = isDark ? '#9ca3af' : '#4b5563';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(w, zeroY); ctx.stroke();
+            }
+
+            // Plot
+            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            const eq = input.value;
+
+            try {
+                // Secure eval with math.js
+                const node = math.parse(eq);
+                const code = node.compile();
+
+                let first = true;
+
+                for (let px = 0; px <= w; px++) {
+                    const x = xMin + (px / w) * xRange;
+                    let y;
+                    try { y = code.evaluate({ x: x }); } catch (e) { y = NaN; }
+
+                    const py = toPy(y);
+
+                    if (!isFinite(py) || isNaN(py)) { first = true; continue; }
+
+                    if (first) { ctx.moveTo(px, py); first = false; }
+                    else {
+                        // Simple asymptote guard
+                        // if distance is huge, don't draw
+                        // Not implemented fully here for simplicity but handled by browser mostly
+                        ctx.lineTo(px, py);
+                    }
+                }
+                ctx.stroke();
+            } catch (e) {
+                errorMsg.textContent = "Error: " + e.message;
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('plotBtn').onclick = render;
+        document.getElementById('downloadBtn').onclick = () => {
+            const w = canvas.width, h = canvas.height;
+            const isDark = html.classList.contains('dark');
+            const temp = document.createElement('canvas');
+            temp.width = w; temp.height = h;
+            const tCtx = temp.getContext('2d');
+            tCtx.fillStyle = isDark ? '#1f2937' : '#ffffff';
+            tCtx.fillRect(0, 0, w, h);
+            tCtx.drawImage(canvas, 0, 0);
+            const l = document.createElement('a');
+            l.download = 'graph-2d.png';
+            l.href = temp.toDataURL();
+            l.click();
+        };
+
+        input.addEventListener('keyup', () => render());
+
+        // Preset Selector Logic
+        const presetSelect = document.getElementById('presetSelect');
+        presetSelect.addEventListener('change', (e) => {
+            input.value = e.target.value;
+            render();
+            // Reset select so user can pick same one again if they edit and want to revert
+            setTimeout(() => e.target.value = "", 500);
+        });
+
+        // Zoom & Pan Variables
+        let isDragging = false;
+        let startX, startY;
+        let viewXMin = parseFloat(inXMin.value) || -10;
+        let viewXMax = parseFloat(inXMax.value) || 10;
+        let viewYMin = parseFloat(inYMin.value) || -10;
+        let viewYMax = parseFloat(inYMax.value) || 10;
+
+        // Mouse Events for Pan
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            const xRange = viewXMax - viewXMin;
+            const yRange = viewYMax - viewYMin;
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const deltaX = (dx / w) * xRange;
+            const deltaY = (dy / h) * yRange;
+
+            viewXMin -= deltaX;
+            viewXMax -= deltaX;
+            viewYMin += deltaY;
+            viewYMax += deltaY;
+
+            // Sync inputs (optional: can be throttled)
+            inXMin.value = viewXMin.toFixed(2);
+            inXMax.value = viewXMax.toFixed(2);
+            inYMin.value = viewYMin.toFixed(2);
+            inYMax.value = viewYMax.toFixed(2);
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            render();
+        });
+
+        canvas.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mouseleave', () => isDragging = false);
+
+        // Wheel Event for Zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+
+            const xRange = viewXMax - viewXMin;
+            const yRange = viewYMax - viewYMin;
+
+            const centerX = (viewXMin + viewXMax) / 2;
+            const centerY = (viewYMin + viewYMax) / 2;
+
+            const newXRadius = (xRange * zoomFactor) / 2;
+            const newYRadius = (yRange * zoomFactor) / 2;
+
+            viewXMin = centerX - newXRadius;
+            viewXMax = centerX + newXRadius;
+            viewYMin = centerY - newYRadius;
+            viewYMax = centerY + newYRadius;
+
+            inXMin.value = viewXMin.toFixed(2);
+            inXMax.value = viewXMax.toFixed(2);
+            inYMin.value = viewYMin.toFixed(2);
+            inYMax.value = viewYMax.toFixed(2);
+
+            render();
+        });
+
+        // Form Handling
+        const saveForm = document.getElementById('saveForm');
+        const shareBtn = document.getElementById('shareBtn');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        // Share Logic
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                const id = document.querySelector('input[name="id"]').value;
+                if (!id) {
+                    alert("Please save the graph first!");
+                    return;
+                }
+
+                fetch(`/api/graphs/${id}/share-link`)
+                    .then(r => r.text())
+                    .then(path => {
+                        const fullUrl = window.location.origin + path;
+                        navigator.clipboard.writeText(fullUrl).then(() => {
+                            showToast("Link Copied to Clipboard! 🔗");
+                        });
+                    })
+                    .catch(() => alert("Failed to get share link"));
+            });
+        }
+
+        saveForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(saveForm);
+
+            fetch('/save-graph', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    // Update ID if it was a new graph (optional, requires backend to return ID)
+                    // For now, simpler to just show success. 
+                    // Ideally, response should return JSON with new ID.
+                    // Reload if new graph to get ID?
+                    if (!document.querySelector('input[name="id"]').value) {
+                        window.location.href = "/main";
+                    } else {
+                        showToast("Graph Saved Successfully!");
+                    }
+                } else {
+                    alert('Error saving graph');
+                }
+            }).catch(() => alert('Network error'));
+        });
+
+        function showToast(msg) {
+            if (msg) toastMsg.textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100); 
+    </script>
+</body>
+
+</html>

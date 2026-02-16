@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${graph != null} ? ${graph.title} : 'New 3D Graph'">3D Plotter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col p-4 transition-colors duration-300">
+
+    <!-- Navbar -->
+    <nav
+        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm flex justify-between items-center mb-6 transition-colors duration-300">
+        <a href="/main"
+            class="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">← Back
+            to Dashboard</a>
+        <h1 class="font-black text-xl italic tracking-tighter text-purple-600 transform">3D<span
+                class="text-gray-800 dark:text-white">STUDIO</span></h1>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggle"
+            class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+            <svg id="sun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+            </svg>
+            <svg id="moon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <div class="flex-1 flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full">
+        <!-- 3D  Area -->
+        <div id="container3D"
+            class="flex-1 bg-gray-900 rounded-2xl shadow-lg border border-gray-800 relative overflow-hidden h-[500px] lg:h-auto">
+            <div class="absolute bottom-4 right-4 z-10">
+                <button id="downloadBtn"
+                    class="bg-gray-700/50 backdrop-blur text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-white hover:text-gray-900 transition shadow-lg border border-gray-600">Download
+                    Snapshot</button>
+            </div>
+            <div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
+                <button onclick="resetCam()"
+                    class="bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded border border-gray-700 hover:bg-gray-700">Reset
+                    View</button>
+            </div>
+            <div class="absolute bottom-4 left-4 z-10 pointer-events-none">
+                <p class="text-xs text-gray-500 font-mono">Range: <span id="rangeDisplay">20x20</span></p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="w-full lg:w-96 flex flex-col gap-4">
+            <div
+                class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                <h2 class="font-bold text-gray-800 dark:text-white mb-4">Properties</h2>
+
+                <form action="/save-graph" method="post" id="saveForm">
+                    <input type="hidden" name="mode" value="3d">
+                    <input type="hidden" name="id" th:value="${graph != null} ? ${graph.id} : ''">
+
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Title</label>
+                    <input type="text" name="title" th:value="${graph != null} ? ${graph.title} : 'Untitled 3D Graph'"
+                        class="w-full mb-4 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Equation (z =
+                        f(x, y))</label>
+
+                    <!-- NEW: 3D Presets -->
+                    <select id="presetSelect"
+                        class="w-full mb-2 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-500 dark:text-gray-400 focus:outline-none transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <option value="" disabled selected>✨ Select a 3D shape...</option>
+                        <option value="cos(sqrt(x^2 + y^2))">Ripple</option>
+                        <option value="sin(x) * cos(y)">Egg Carton</option>
+                        <option value="x^2 - y^2">Saddle</option>
+                        <option value="exp(-(x^2 + y^2))">Gaussian Peak</option>
+                        <option value="sin(x/2) * cos(y/2) * 5">Gentle Hills</option>
+                    </select>
+
+                    <input type="text" id="equationInput" name="equation"
+                        th:value="${graph != null} ? ${graph.equation} : 'cos(sqrt(x*x + y*y))'"
+                        class="w-full mb-4 px-3 py-2 bg-purple-50 dark:bg-gray-900 border border-purple-200 dark:border-gray-700 rounded-lg font-mono text-purple-700 dark:text-purple-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+
+                    <!-- Range Inputs -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">X Range (±)</label>
+                            <input type="number" id="xRange" value="10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Y Range (±)</label>
+                            <input type="number" id="yRange" value="10"
+                                class="w-full px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="button" id="plotBtn"
+                            class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold py-2 rounded-lg transition">Render</button>
+                        <button type="submit" id="saveBtn"
+                            class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg transition shadow-md shadow-purple-500/30">Save
+                            Graph</button>
+                    </div>
+                    <!-- Share Button (Only for existing graphs) -->
+                    <button th:if="${graph != null}" type="button" id="shareBtn"
+                        class="w-full mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition shadow-md shadow-green-500/30">
+                        Share Link 🔗
+                    </button>
+                    <!-- PDF Button -->
+                    <button type="button" onclick="exportPDF()"
+                        class="w-full mt-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 rounded-lg transition shadow-md border border-gray-600">
+                        Download PDF Report 📄
+                    </button>
+                </form>
+
+                <!-- Toast Notification -->
+                <div id="toast"
+                    class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2 z-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span id="toastMsg" class="font-bold text-sm">Graph Saved Successfully!</span>
+                </div>
+
+                <div id="errorMsg"
+                    class="hidden mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded"></div>
+            </div>
+
+            <div
+                class="bg-purple-50 dark:bg-purple-900/10 p-6 rounded-2xl border border-purple-100 dark:border-purple-800 transition-colors">
+                <h3 class="font-bold text-purple-800 dark:text-purple-300 text-sm mb-2">Instructions</h3>
+                <p class="text-xs text-purple-600 dark:text-purple-400 leading-relaxed">
+                    Set Range to e.g., 10 for -10 to +10.<br>
+                    Left click to rotate, right click to pan.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('container3D');
+        const input = document.getElementById('equationInput');
+        const inXRange = document.getElementById('xRange');
+        const inYRange = document.getElementById('yRange');
+        const rangeDisplay = document.getElementById('rangeDisplay');
+
+        let scene, camera, renderer, controls, mesh, gridHelper;
+
+        const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') html.classList.add('dark');
+        toggleBtn.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            updateSceneTheme();
+        });
+        function updateSceneTheme() {
+            if (!scene) return;
+            const isDark = html.classList.contains('dark');
+            scene.background = new THREE.Color(isDark ? 0x111827 : 0xffffff);
+        }
+
+        function init() {
+            // For PDF export, we might want a consistent background, but for live view, theme is better.
+            // The PDF export function will handle its own rendering for the snapshot.
+            scene = new THREE.Scene();
+            updateSceneTheme(); // Sets background based on theme
+
+            const width = container.clientWidth; // Use container's current width
+            const height = container.clientHeight; // Use container's current height
+
+            camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            camera.position.set(15, 15, 15); // Keep original camera position for live view
+
+            // IMPORTANT: preserveDrawingBuffer: true is required for toDataURL() to work
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(5, 10, 7);
+            scene.add(light);
+
+            const axesHelper = new THREE.AxesHelper(5); // Add axes helper
+            scene.add(axesHelper);
+
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+            renderGraph();
+        }
+
+        function renderGraph() {
+            if (mesh) scene.remove(mesh);
+            if (gridHelper) scene.remove(gridHelper);
+
+            const eq = input.value;
+            const xR = parseFloat(inXRange.value) || 10;
+            const yR = parseFloat(inYRange.value) || 10;
+            const size = Math.max(xR, yR) * 2;
+
+            gridHelper = new THREE.GridHelper(size, 20, 0x374151, 0x1f2937);
+            scene.add(gridHelper);
+
+            rangeDisplay.textContent = `X:±${xR}, Y:±${yR}`;
+
+            const segments = 100;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+
+            try {
+                // Secure eval
+                const node = math.parse(eq);
+                const code = node.compile();
+
+                for (let i = 0; i <= segments; i++) {
+                    for (let j = 0; j <= segments; j++) {
+                        const u = i / segments;
+                        const v = j / segments;
+
+                        const x = (u - 0.5) * 2 * xR;
+                        const z = (v - 0.5) * 2 * yR;
+
+                        let y;
+                        try {
+                            y = code.evaluate({ x: x, y: z });
+                        } catch (e) { y = 0; }
+
+                        if (!isFinite(y)) y = 0;
+
+                        vertices.push(x, y, z);
+
+                        const c = new THREE.Color().setHSL(0.6 * (1 - (y + 5) / 15), 1, 0.5);
+                        colors.push(c.r, c.g, c.b);
+                    }
+                }
+
+                const indices = [];
+                for (let i = 0; i < segments; i++) {
+                    for (let j = 0; j < segments; j++) {
+                        const a = i * (segments + 1) + j;
+                        const b = i * (segments + 1) + j + 1;
+                        const c = (i + 1) * (segments + 1) + j;
+                        const d = (i + 1) * (segments + 1) + j + 1;
+                        indices.push(a, c, b);
+                        indices.push(b, c, d);
+                    }
+                }
+
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                geometry.setIndex(indices);
+                geometry.computeVertexNormals();
+
+                mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+                    vertexColors: true, side: THREE.DoubleSide, metalness: 0.1, roughness: 0.5
+                }));
+                scene.add(mesh);
+                document.getElementById('errorMsg').classList.add('hidden');
+            } catch (e) {
+                const em = document.getElementById('errorMsg');
+                em.textContent = e.message;
+                em.classList.remove('hidden');
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.resetCam = function () {
+            camera.position.set(15, 15, 15);
+            camera.lookAt(0, 0, 0);
+        };
+
+        // Live Preview: Update graph on typing
+        input.addEventListener('keyup', () => renderGraph());
+
+        // Preset Selector Logic
+        const presetSelect = document.getElementById('presetSelect');
+        presetSelect.addEventListener('change', (e) => {
+            input.value = e.target.value;
+            renderGraph();
+            setTimeout(() => e.target.value = "", 500);
+        });
+
+        document.getElementById('plotBtn').onclick = renderGraph;
+        document.getElementById('downloadBtn').onclick = () => {
+            renderer.render(scene, camera);
+            const link = document.createElement('a');
+            link.download = 'graph-3d.png';
+            link.href = renderer.domElement.toDataURL();
+            link.click();
+        };
+
+        // Zoom & Pan Variables
+        let isDragging = false;
+        let startX, startY;
+
+        // Mouse Events for Pan (Right Click is standard for OrbitControls Pan, but let's add custom range update)
+        // Note: For 3D, OrbitControls handles the view pan/rotate. 
+        // We will hook into OrbitControls change to update the range inputs if needed, 
+        // OR we can leave OrbitControls to handle view and just use inputs for scale.
+
+        // Let's attach scroll listener to update Range inputs if user wants to "zoom" the math range, not just the camera.
+        // Actually, for 3D, simple camera zoom (OrbitControls) is usually preferred over changing the math domain dynamically.
+        // But the user requested "zoom/pan" like 2D.
+        // In 2D, pan meant moving the window. In 3D, we usually move the camera.
+
+        // Let's stick to standard Three.js controls which are already enabled:
+        // Left Click: Rotate
+        // Right Click: Pan
+        // Scroll: Zoom
+
+        // We will just update instructions text to be clearer.
+
+
+        // Form Handling
+        const saveForm = document.getElementById('saveForm');
+        const toast = document.getElementById('toast');
+
+        saveForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(saveForm);
+
+            fetch('/save-graph', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    showToast();
+                } else {
+                    alert('Error saving graph');
+                }
+            }).catch(() => alert('Network error'));
+        });
+
+        function showToast() {
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

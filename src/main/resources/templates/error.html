@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Error - Plotter Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+        <div class="mb-6 text-red-500">
+            <svg class="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+        </div>
+        <h1 class="text-3xl font-black text-gray-800 dark:text-white mb-2">Oops!</h1>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">Something went wrong. Please try again.</p>
+
+        <div class="text-left bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6 overflow-x-auto">
+            <p class="font-mono text-xs text-red-600 dark:text-red-400" th:text="${status} + ' ' + ${error}"></p>
+            <p class="font-mono text-xs text-red-500/70 mt-1" th:text="${message}"></p>
+        </div>
+
+        <a href="/main"
+            class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all">Back
+            to Dashboard</a>
+    </div>
+</body>
+
+</html>

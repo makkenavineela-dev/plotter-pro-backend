@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Login</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind to use the 'class' strategy for dark mode
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        /* Custom background gradient for aesthetics in Light Mode */
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            transition: background-color 0.3s;
+        }
+
+        /* Dark Mode background */
+
+        html.dark body {
+            background: #020617;
+            /* Dark Gray background */
+        }
+    </style>
+
+
+</head>
+
+<body class="relative min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Theme Toggle Button (Top Right) -->
+    <button id="themeToggle"
+        class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-300 shadow">
+        <!-- Sun Icon (Light Mode) -->
+        <svg id="sunIcon" class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+            </path>
+        </svg>
+        <!-- Moon Icon (Dark Mode) -->
+        <svg id="moonIcon" class="w-6 h-6 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+    </button>
+
+    <!-- Login Card Container -->
+    <div class="w-full max-w-md
+            bg-white dark:bg-gray-800
+            p-8 md:p-10 rounded-xl
+            shadow-2xl dark:shadow-lg
+            transition duration-300">
+
+        <!-- Back to Home Button -->
+        <div class="mb-4">
+            <!-- Corrected link: Use routable path / -->
+            <a href="/"
+                class="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition duration-150">
+                <!-- Icon for 'Back' -->
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg> Back
+                to Home
+            </a>
+        </div>
+
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-800 dark:text-white tracking-tight">
+                Welcome Back
+            </h1>
+            <p class="text-gray-500 dark:text-gray-300 mt-2">Sign in to access your dashboard.</p>
+        </div>
+
+        <!-- *** THYMELEAF ERROR MESSAGE BLOCK *** -->
+        <div th:if="${error}"
+            class="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 rounded-lg text-sm text-center">
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- *** THYMELEAF SUCCESS MESSAGE BLOCK *** -->
+        <div th:if="${success}"
+            class="mb-4 p-3 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 rounded-lg text-sm text-center">
+            <span th:text="${success}"></span>
+        </div>
+        <!-- ************************************ -->
+
+        <!-- Corrected form action: Use routable path /login -->
+        <form th:action="@{/login}" method="post">
+            <!-- Email Input Field -->
+            <div class="mb-6">
+                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Email
+                    Address</label>
+                <!-- Added 'name="email"' for form submission -->
+                <input type="email" id="email" name="email"
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                    required>
+            </div>
+
+            <!-- Password Input Field -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <label for="password"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
+                    <a href="/forgot-password"
+                        class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition duration-150">
+                        Forgot?
+                    </a>
+                </div>
+                <!-- Added 'name="password"' for form submission -->
+                <input type="password" id="password" name="password"
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                    required>
+            </div>
+
+            <!-- Login Button MODIFIED to be a submit button -->
+            <button type="submit"
+                class="block w-full text-center py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200 ease-in-out transform hover:-translate-y-0.5">
+                Log In
+            </button>
+        </form>
+
+        <!-- Removed: Separator and Google Login button -->
+
+        <!-- link to register -->
+        <div class="mt-8 text-center text-sm">
+            <p class="text-gray-600 dark:text-gray-300">
+                Don't have an account?
+                <!-- Corrected link: Use routable path /register -->
+                <a href="/register"
+                    class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition duration-150">
+                    Create an account
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function enableDarkMode() {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+            // Using localStorage to save the preference
+            localStorage.setItem('theme', 'dark');
+        }
+
+        function disableDarkMode() {
+            document.documentElement.classList.remove('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+            // Using localStorage to save the preference
+            localStorage.setItem('theme', 'light');
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Initial check for theme preference on load
+        (function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            // Check for OS preference only if no local storage setting exists
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+        })();
+    </script>
+
+
+</body>
+
+</html>

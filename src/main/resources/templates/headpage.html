@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plotter Pro - Visualize Math Instantly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.4;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-20px) scale(1.1);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen relative">
+
+    <!-- Navbar -->
+    <nav
+        class="absolute top-0 left-0 w-full z-50 p-6 flex justify-between items-center max-w-7xl mx-auto left-0 right-0">
+        <div class="flex items-center gap-2">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                P</div>
+            <span class="font-black text-2xl tracking-tighter">PLOTTER<span class="text-blue-500">PRO</span></span>
+        </div>
+        <div class="flex gap-4">
+            <a href="/login" class="text-gray-300 hover:text-white font-medium transition">Log In</a>
+            <a href="/register"
+                class="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition shadow-lg hover:shadow-white/20">Get
+                Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- Animated Background Canvas -->
+        <canvas id="waveCanvas" class="absolute inset-0 w-full h-full z-0 opacity-30"></canvas>
+
+        <!-- Blobs -->
+        <div class="blob w-96 h-96 bg-purple-600 rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="blob w-96 h-96 bg-blue-600 rounded-full bottom-0 right-0 translate-x-1/2 translate-y-1/2"
+            style="animation-delay: -5s;"></div>
+
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
+            <div
+                class="inline-block mb-4 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-blue-300 backdrop-blur-sm animate-fade-in-up">
+                ✨ New: Share your graphs with the world!
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight animate-fade-in-up"
+                style="animation-delay: 0.1s;">
+                Mathematics Reimagined.<br>
+                <span class="gradient-text">Beautifully Simple.</span>
+            </h1>
+
+            <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
+                style="animation-delay: 0.2s;">
+                Create stunning 2D and 3D graphs instantly. Save your work, export professional PDF reports, and share
+                interactive links with anyone.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
+                style="animation-delay: 0.3s;">
+                <a href="/register"
+                    class="group relative px-8 py-4 bg-blue-600 rounded-full font-bold text-lg overflow-hidden shadow-lg shadow-blue-500/25 transition hover:scale-105">
+                    <div
+                        class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine">
+                    </div>
+                    Start Plotting Free ->
+                </a>
+                <a href="/login"
+                    class="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition backdrop-blur-sm">
+                    Log In
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-24 bg-gray-900 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div
+                    class="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-blue-500/50 transition duration-300 group">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">2D & 3D Plotting</h3>
+                    <p class="text-gray-400">Visualize complex functions in seconds. Rotate 3D plots in real-time and
+                        explore the math from every angle.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div
+                    class="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-purple-500/50 transition duration-300 group">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Share Instantly</h3>
+                    <p class="text-gray-400">Send a link to anyone. Your graphs are publically accessible via secure,
+                        unique URLs instantly generated for you.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div
+                    class="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-green-500/50 transition duration-300 group">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Export to PDF</h3>
+                    <p class="text-gray-400">Need to submit homework or a report? Download high-quality PDF snapshots of
+                        your graphs with one click.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-10 text-center text-gray-600 text-sm border-t border-white/5">
+        <p>&copy; 2026 Plotter Pro. Built for Math Lovers.</p>
+    </footer>
+
+    <!-- Animation Script -->
+    <script>
+        // Sine Wave Animation on Canvas
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let time = 0;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function drawWave(yOffset, amplitude, frequency, speed, color) {
+            ctx.beginPath();
+            ctx.moveTo(0, height / 2);
+            for (let x = 0; x < width; x++) {
+                const y = Math.sin(x * frequency + time * speed) * amplitude + (height / 2) + yOffset;
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Multiple interacting waves
+            drawWave(0, 50, 0.01, 0.02, 'rgba(59, 130, 246, 0.5)'); // Blue
+            drawWave(20, 60, 0.008, 0.015, 'rgba(139, 92, 246, 0.5)'); // Purple
+            drawWave(-20, 40, 0.012, 0.025, 'rgba(236, 72, 153, 0.3)'); // Pink
+
+            // Animated Particles
+            time += 1;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // GSAP Entrance Animations
+        gsap.from(".animate-fade-in-up", {
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out"
+        });
+    </script>
+
+    <style>
+        @keyframes shine {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .group:hover .group-hover\:animate-shine {
+            animation: shine 1.5s infinite;
+        }
+    </style>
+</body>
+
+</html>
