@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -17,6 +18,9 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.userRepository = userRepository;
@@ -81,7 +85,7 @@ public class UserService implements UserDetailsService {
             userRepository.save(user);
 
             // Construct link
-            String resetLink = "http://localhost:8082/reset-password?token=" + token;
+            String resetLink = baseUrl + "/reset-password?token=" + token;
 
             // Send Email
             String subject = "Password Reset Request";
