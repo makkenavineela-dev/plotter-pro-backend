@@ -87,41 +87,23 @@ public class AuthController {
     @PostMapping("/verify-pin")
     public String processVerifyPin(@RequestParam String email,
             @RequestParam String pin,
-            @RequestParam String password,
             Model model) {
 
         // 1. Validate PIN
         if (!userService.validatePasswordResetToken(pin)) {
             model.addAttribute("error", "Invalid or expired PIN.");
-            model.addAttribute("email", email); // Keep email for retry
-            return "verify-pin";
-        }
-
-        // 2. Reset Password
-        try {
-            userService.resetPassword(pin, password);
-            return "redirect:/login?success=Password+reset+successful";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "Failed to reset password: " + e.getMessage());
             model.addAttribute("email", email);
             return "verify-pin";
         }
+
+        // 2. Redirect to Reset Password Page with validated token (PIN)
+        return "redirect:/reset-password?token=" + pin;
     }
 
-    // REMOVING OLD LINK-BASED ENDPOINTS IF THEY EXIST OR LEAVING THEM UNUSED
     @GetMapping("/reset-password")
     public String resetPasswordPage(@RequestParam String token, Model model) {
         if (!userService.validatePasswordResetToken(token)) {
-            model.addAttribute("error", "Invalid or expired token");
-            // Since we are redirecting to login, we should probably pass the error as a
-            // param or flash attribute
-            // But for now, let's just return to login view with error in model if that
-            // works,
-            // otherwise redirecting with param is safer for a fresh request.
-            // Let's stick to the previous plan: return "login" view directly is fine if we
-            // want to show error context.
-            return "login";
+            return "redirect:/login?error=Invalid+Token";
         }
         model.addAttribute("token", token);
         return "reset-password";
@@ -132,6 +114,7 @@ public class AuthController {
             @RequestParam String password,
             @RequestParam("confirm-password") String confirmPassword,
             Model model) {
+
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Passwords do not match");
             model.addAttribute("token", token);
