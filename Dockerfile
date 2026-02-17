@@ -11,4 +11,5 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # Use JAVA_OPTS to control memory usage (Critical for free tiers)
 ENV JAVA_OPTS="-Xmx350m -Xms350m"
-CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+EXPOSE 8082
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar --server.port=${PORT:-8082}"]

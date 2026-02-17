@@ -88,8 +88,15 @@ public class UserService implements UserDetailsService {
             String resetLink = baseUrl + "/reset-password?token=" + token;
 
             // Send Email
-            String subject = "Password Reset Request";
-            String text = "To reset your password, click the link below:\n" + resetLink;
+            String subject = "PlotterPro: Password Reset Request";
+            String text = "Hello,\n\n" +
+                    "We received a request to reset the password for your PlotterPro account.\n" +
+                    "Please click the link below to set a new password:\n\n" +
+                    resetLink + "\n\n" +
+                    "This link allows you to reset your password and is valid for 1 hour.\n" +
+                    "If you did not request this change, you can safely ignore this email.\n\n" +
+                    "Best regards,\n" +
+                    "The PlotterPro Team";
 
             emailService.sendSimpleMessage(email, subject, text);
 
