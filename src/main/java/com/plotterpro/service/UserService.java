@@ -79,40 +79,33 @@ public class UserService implements UserDetailsService {
 
     public void createPasswordResetToken(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
-            String token = java.util.UUID.randomUUID().toString();
-            user.setResetPasswordToken(token);
-            user.setResetPasswordTokenExpiry(java.time.LocalDateTime.now().plusHours(24)); // 24 hour expiry to fix
-                                                                                           // timezone issues
+            // Generate 5-digit PIN
+            String pin = String.format("%05d", new java.util.Random().nextInt(100000));
+
+            user.setResetPasswordToken(pin);
+            user.setResetPasswordTokenExpiry(java.time.LocalDateTime.now().plusMinutes(15)); // 15 min expiry for PIN
             userRepository.save(user);
 
-            // Construct link
-            String resetLink = baseUrl + "/reset-password?token=" + token;
-
-            // Send Email
-            String subject = "PlotterPro: Password Reset Request";
+            // Send Email with PIN
+            String subject = "PlotterPro: Password Reset PIN";
             String text = "Hello,\n\n" +
-                    "We received a request to reset the password for your PlotterPro account.\n" +
-                    "Please click the link below to set a new password:\n\n" +
-                    resetLink + "\n\n" +
-                    "This link allows you to reset your password and is valid for 24 hours.\n" +
-                    "If you did not request this change, you can safely ignore this email.\n\n" +
+                    "Your password reset PIN is: " + pin + "\n\n" +
+                    "This PIN is valid for 15 minutes.\n" +
+                    "Go back to the application and enter this PIN to reset your password.\n\n" +
+                    "If you did not request this change, ignore this email.\n\n" +
                     "Best regards,\n" +
                     "The PlotterPro Team";
 
             emailService.sendSimpleMessage(email, subject, text);
 
-            System.out.println("Email sent to " + email);
+            System.out.println("Reset PIN sent to " + email + ": " + pin);
         });
     }
 
     public boolean validatePasswordResetToken(String token) {
         return userRepository.findByResetPasswordToken(token)
                 .map(user -> {
-                    System.out.println("Validating Token: " + token);
-                    System.out.println("Token Expiry: " + user.getResetPasswordTokenExpiry());
-                    System.out.println("Current Time: " + java.time.LocalDateTime.now());
                     boolean isValid = user.getResetPasswordTokenExpiry().isAfter(java.time.LocalDateTime.now());
-                    System.out.println("Is Valid? " + isValid);
                     return isValid;
                 })
                 .orElse(false);

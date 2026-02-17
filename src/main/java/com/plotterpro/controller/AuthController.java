@@ -67,15 +67,49 @@ public class AuthController {
     public String processForgotPassword(@RequestParam String email, Model model) {
         try {
             userService.createPasswordResetToken(email);
-            model.addAttribute("message", "If an account exists, a reset link has been sent to your email.");
+            // Pass email to the view so it can be used in the hidden field forms
+            model.addAttribute("email", email);
+            model.addAttribute("success", "A 5-digit PIN has been sent to your email.");
+            return "verify-pin"; // Show the PIN entry page directly
         } catch (Exception e) {
             e.printStackTrace();
-            // Show the real error to help debug
             model.addAttribute("error", "Error sending email: " + e.getMessage());
+            return "forgot-password";
         }
-        return "forgot-password";
     }
 
+    // New Endpoint: Verify PIN and Reset Password in one go
+    @GetMapping("/verify-pin")
+    public String verifyPinPage() {
+        return "verify-pin";
+    }
+
+    @PostMapping("/verify-pin")
+    public String processVerifyPin(@RequestParam String email,
+            @RequestParam String pin,
+            @RequestParam String password,
+            Model model) {
+
+        // 1. Validate PIN
+        if (!userService.validatePasswordResetToken(pin)) {
+            model.addAttribute("error", "Invalid or expired PIN.");
+            model.addAttribute("email", email); // Keep email for retry
+            return "verify-pin";
+        }
+
+        // 2. Reset Password
+        try {
+            userService.resetPassword(pin, password);
+            return "redirect:/login?success=Password+reset+successful";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Failed to reset password: " + e.getMessage());
+            model.addAttribute("email", email);
+            return "verify-pin";
+        }
+    }
+
+    // REMOVING OLD LINK-BASED ENDPOINTS IF THEY EXIST OR LEAVING THEM UNUSED
     @GetMapping("/reset-password")
     public String resetPasswordPage(@RequestParam String token, Model model) {
         if (!userService.validatePasswordResetToken(token)) {

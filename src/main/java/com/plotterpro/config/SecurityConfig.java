@@ -18,7 +18,7 @@ public class SecurityConfig {
                 http
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/", "/headpage", "/register", "/login", "/share/**",
-                                                                "/forgot-password", "/reset-password",
+                                                                "/forgot-password", "/reset-password", "/verify-pin",
                                                                 "/css/**", "/js/**", "/error")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
