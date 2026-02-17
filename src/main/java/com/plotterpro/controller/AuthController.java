@@ -108,7 +108,9 @@ public class AuthController {
             userService.resetPassword(token, password);
             return "redirect:/login?success=Password+reset+successful";
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to reset password");
+            e.printStackTrace();
+            model.addAttribute("error", "Failed to reset password: " + e.getMessage());
+            model.addAttribute("token", token);
             return "reset-password";
         }
     }
