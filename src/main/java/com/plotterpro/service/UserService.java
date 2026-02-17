@@ -81,7 +81,8 @@ public class UserService implements UserDetailsService {
         userRepository.findByEmail(email).ifPresent(user -> {
             String token = java.util.UUID.randomUUID().toString();
             user.setResetPasswordToken(token);
-            user.setResetPasswordTokenExpiry(java.time.LocalDateTime.now().plusHours(1)); // 1 hour expiry
+            user.setResetPasswordTokenExpiry(java.time.LocalDateTime.now().plusHours(24)); // 24 hour expiry to fix
+                                                                                           // timezone issues
             userRepository.save(user);
 
             // Construct link
@@ -93,7 +94,7 @@ public class UserService implements UserDetailsService {
                     "We received a request to reset the password for your PlotterPro account.\n" +
                     "Please click the link below to set a new password:\n\n" +
                     resetLink + "\n\n" +
-                    "This link allows you to reset your password and is valid for 1 hour.\n" +
+                    "This link allows you to reset your password and is valid for 24 hours.\n" +
                     "If you did not request this change, you can safely ignore this email.\n\n" +
                     "Best regards,\n" +
                     "The PlotterPro Team";
@@ -106,7 +107,14 @@ public class UserService implements UserDetailsService {
 
     public boolean validatePasswordResetToken(String token) {
         return userRepository.findByResetPasswordToken(token)
-                .map(user -> user.getResetPasswordTokenExpiry().isAfter(java.time.LocalDateTime.now()))
+                .map(user -> {
+                    System.out.println("Validating Token: " + token);
+                    System.out.println("Token Expiry: " + user.getResetPasswordTokenExpiry());
+                    System.out.println("Current Time: " + java.time.LocalDateTime.now());
+                    boolean isValid = user.getResetPasswordTokenExpiry().isAfter(java.time.LocalDateTime.now());
+                    System.out.println("Is Valid? " + isValid);
+                    return isValid;
+                })
                 .orElse(false);
     }
 
