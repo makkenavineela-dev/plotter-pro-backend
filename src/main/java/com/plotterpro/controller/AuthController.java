@@ -69,8 +69,9 @@ public class AuthController {
             userService.createPasswordResetToken(email);
             model.addAttribute("message", "If an account exists, a reset link has been sent to your email.");
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to send email. Please check server logs.");
             e.printStackTrace();
+            // Show the real error to help debug
+            model.addAttribute("error", "Error sending email: " + e.getMessage());
         }
         return "forgot-password";
     }
